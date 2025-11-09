@@ -53,7 +53,7 @@ encodings = tokenizer(inputs, return_tensors="pt", padding=True, truncation=True
 input_ids = encodings["input_ids"].to(DEVICE)
 labels = input_ids.clone()
 
-epochs = int(args.epochs)
+epochs = int(args.epochs + '_ft')
 
 # ========== Fine-Tuning (FT) ==========
 model_ft = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
@@ -88,22 +88,25 @@ for epoch in range(epochs):
         ft_mems.append(mem)
 
         # === LOG STEP ===
-        logger.log_step(
-            epoch * len(inputs) + step, **{
-            "ft_loss": loss.item(),
-            "ft_forward_time_ms": fw_time * 1000,
-            "ft_backward_time_ms": bw_time * 1000,
-            "ft_memory_mb": mem,
-            "ft_step": epoch * len(inputs) + step
+        logger.log_step(epoch * len(inputs) + step, **{
+            "loss": loss.item(),
+            "forward_time_ms": fw_time * 1000,
+            "backward_time_ms": bw_time * 1000,
+            "memory_mb": mem,
+            "step": epoch * len(inputs) + step
         })
 
         epoch_loss.append(loss.item())
     print(f"Epoch {epoch+1}: Loss = {np.mean(epoch_loss):.4f}")
 
 # Итоговая статистика FT
-logger.log_summary("ft_mean_forward_ms", np.mean(ft_fw_times) * 1000)
-logger.log_summary("ft_mean_backward_ms", np.mean(ft_bw_times) * 1000)
-logger.log_summary("ft_max_memory_mb", np.max(ft_mems))
+logger.log_summary("mean_forward_ms", np.mean(ft_fw_times) * 1000)
+logger.log_summary("mean_backward_ms", np.mean(ft_bw_times) * 1000)
+logger.log_summary("max_memory_mb", np.max(ft_mems))
+
+logger.finish()
+
+logger = WandbLogger(run_name=args.run_name + '_lora')
 
 # ========== LoRA ==========
 model_lora = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
@@ -124,6 +127,8 @@ lora_fw_times, lora_bw_times, lora_mems = [], [], []
 
 for epoch in range(epochs):
     epoch_loss = []
+    print("Эпоха", epoch, "B min/max", lora_layer.B.data.min().item(), lora_layer.B.data.max().item())
+    print("Эпоха", epoch, "A min/max", lora_layer.A.data.min().item(), lora_layer.A.data.max().item())
     for step in range(len(inputs)):
         optimizer.zero_grad()
         batch_input = input_ids[step].unsqueeze(0)
@@ -147,19 +152,19 @@ for epoch in range(epochs):
 
         # === LOG STEP ===
         logger.log_step(epoch * len(inputs) + step, **{
-            "lora_loss": loss.item(),
-            "lora_forward_time_ms": fw_time * 1000,
-            "lora_backward_time_ms": bw_time * 1000,
-            "lora_memory_mb": mem,
-            "lora_step": epoch * len(inputs) + step
+            "loss": loss.item(),
+            "forward_time_ms": fw_time * 1000,
+            "backward_time_ms": bw_time * 1000,
+            "memory_mb": mem,
+            "step": epoch * len(inputs) + step
         })
 
         epoch_loss.append(loss.item())
     print(f"Epoch {epoch+1}: Loss = {np.mean(epoch_loss):.4f}")
 
 # Итоговая статистика LoRA
-logger.log_summary("lora_mean_forward_ms", np.mean(lora_fw_times) * 1000)
-logger.log_summary("lora_mean_backward_ms", np.mean(lora_bw_times) * 1000)
-logger.log_summary("lora_max_memory_mb", np.max(lora_mems))
+logger.log_summary("mean_forward_ms", np.mean(lora_fw_times) * 1000)
+logger.log_summary("mean_backward_ms", np.mean(lora_bw_times) * 1000)
+logger.log_summary("max_memory_mb", np.max(lora_mems))
 
 logger.finish()
