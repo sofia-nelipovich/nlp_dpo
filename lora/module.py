@@ -1,0 +1,57 @@
+import torch
+import torch.nn as nn
+
+class LoRALayer(nn.Module):
+    """
+    Реализация LoRA (Low-Rank Adaptation) слоя.
+    """
+
+    def __init__(self, original_linear: nn.Linear, r: int = 4, alpha: float = 1.0):
+        """
+        original_linear: исходный nn.Linear слой из LLM, который будем адаптировать
+        r: ранг низкорангового разложения
+        alpha: коэффициент масштабирования
+        """
+        super().__init__()
+        self.in_channels = original_linear.weight.shape[1]
+        self.out_channels = original_linear.weight.shape[0]
+        self.r = r
+        self.alpha = alpha
+
+        # Сохраняем исходные замороженные веса
+        self.weight = original_linear.weight.detach().clone()
+        self.bias = original_linear.bias.detach().clone() if original_linear.bias is not None else None
+
+        # Создаём обучаемые матрицы B и A для low-rank адаптации
+        # B: (out_channels, r) -- инициализируется нулями
+        self.B = nn.Parameter(torch.zeros(self.out_channels, r))
+        # A: (r, in_channels) -- инициализируется случайно, т.к. градиенты для A пойдут сразу
+        self.A = nn.Parameter(torch.randn(r, self.in_channels) * 0.01) # N(0, 0.01)
+
+
+    def forward(self, x):
+        """
+        Сначала считаем стандартный выход (замороженный), потом добавляем low-rank слагаемое BA.
+        h = Wx + BAx, где W - pretrained, B и A - обучаемые.
+        """
+        # Основной замороженный вывод
+        # print(x.shape, self.weight.shape, self.bias.shape)
+        out = torch.nn.functional.linear(x, self.weight.T, self.bias)
+        # LoRA-компонента
+        lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A).T) * (self.alpha / self.r)
+        return out + lora_out
+
+    def num_trainable_parameters(self):
+        """
+        Возвращает количество обучаемых параметров (только матрицы B и A).
+        """
+        total = sum(p.numel() for p in [self.B, self.A])
+        return total
+
+    def num_total_parameters(self):
+        """
+        Возвращает общее число параметров (включая замороженные — для сравнения).
+        """
+        base = self.weight.numel() + (self.bias.numel() if self.bias is not None else 0)
+        lora = self.num_trainable_parameters()
+        return base + lora
