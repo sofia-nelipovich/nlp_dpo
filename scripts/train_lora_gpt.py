@@ -18,7 +18,7 @@ parser.add_argument('--epochs', type=str, required=True, help='Число эпо
 args = parser.parse_args()
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-logger = WandbLogger(run_name=args.run_name)
+logger = WandbLogger(run_name=args.run_name + '_ft')
 
 # --- Подсчёт параметров ---
 def get_model_parameters(model):
@@ -53,7 +53,7 @@ encodings = tokenizer(inputs, return_tensors="pt", padding=True, truncation=True
 input_ids = encodings["input_ids"].to(DEVICE)
 labels = input_ids.clone()
 
-epochs = int(args.epochs + '_ft')
+epochs = int(args.epochs)
 
 # ========== Fine-Tuning (FT) ==========
 model_ft = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
