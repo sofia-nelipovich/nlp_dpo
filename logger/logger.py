@@ -9,7 +9,7 @@ class WandbLogger:
             name=run_name,
             monitor_gym=True,
             save_code=True,
-            settings=wandb.Settings(code_dir=".")
+            settings=wandb.Settings(code_dir="..")
         )
 
     def log_config(self, params):
