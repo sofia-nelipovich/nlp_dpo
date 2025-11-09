@@ -93,7 +93,6 @@ for epoch in range(epochs):
             "forward_time_ms": fw_time * 1000,
             "backward_time_ms": bw_time * 1000,
             "memory_mb": mem,
-            "step": epoch * len(inputs) + step
         })
 
         epoch_loss.append(loss.item())
@@ -156,7 +155,6 @@ for epoch in range(epochs):
             "forward_time_ms": fw_time * 1000,
             "backward_time_ms": bw_time * 1000,
             "memory_mb": mem,
-            "step": epoch * len(inputs) + step
         })
 
         epoch_loss.append(loss.item())
