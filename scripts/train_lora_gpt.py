@@ -119,7 +119,7 @@ for param in lora_layer.parameters():
     param.requires_grad = True
 print_and_log_model_parameters(model_lora, "LoRA")
 
-optimizer = optim.Adam([p for p in model_lora.parameters() if p.requires_grad], lr=5e-4)
+optimizer = optim.Adam(lora_layer.parameters(), lr=5e-4)
 lora_fw_times, lora_bw_times, lora_mems = [], [], []
 
 for epoch in range(epochs):
