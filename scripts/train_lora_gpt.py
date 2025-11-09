@@ -53,7 +53,7 @@ encodings = tokenizer(inputs, return_tensors="pt", padding=True, truncation=True
 input_ids = encodings["input_ids"].to(DEVICE)
 labels = input_ids.clone()
 
-epochs = args.epochs
+epochs = int(args.epochs)
 
 # ========== Fine-Tuning (FT) ==========
 model_ft = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
