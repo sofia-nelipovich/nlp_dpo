@@ -18,7 +18,7 @@ parser.add_argument('--epochs', type=str, required=True, help='Число эпо
 args = parser.parse_args()
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-logger = WandbLogger(run_name=args.run_name + '_ft')
+logger = WandbLogger(project='nlp_dpo', run_name=args.run_name + '_ft')
 
 # --- Подсчёт параметров ---
 def get_model_parameters(model):
@@ -105,9 +105,15 @@ logger.log_summary("max_memory_mb", np.max(ft_mems))
 
 logger.finish()
 
-logger = WandbLogger(run_name=args.run_name + '_lora')
+del model_ft
+del optimizer
+import gc
+gc.collect()
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
 
 # ========== LoRA ==========
+logger = WandbLogger(project='nlp_dpo', run_name=args.run_name + '_lora')
 model_lora = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
 # Patch Conv1D -> LoRA (заменяем только первый mlp.c_fc)
 with torch.no_grad():
