@@ -14,6 +14,7 @@ from logger.logger import WandbLogger
 # --- Имя эксперимента через аргументы ---
 parser = argparse.ArgumentParser(description="GPT2 LoRA vs FT comparison")
 parser.add_argument('--run_name', type=str, required=True, help='Имя wandb-run (эксперимента)')
+parser.add_argument('--epochs', type=str, required=True, help='Число эпох (эксперимента)')
 args = parser.parse_args()
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,7 +53,7 @@ encodings = tokenizer(inputs, return_tensors="pt", padding=True, truncation=True
 input_ids = encodings["input_ids"].to(DEVICE)
 labels = input_ids.clone()
 
-epochs = 2
+epochs = args.epochs
 
 # ========== Fine-Tuning (FT) ==========
 model_ft = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
