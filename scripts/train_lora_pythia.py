@@ -143,6 +143,11 @@ for epoch in range(EPOCHS):
         scaler.update()
 
         optimizer.step()
+        print('Loss:', loss.item())
+        for name, p in model.named_parameters():
+            if p.grad is not None:
+                print(name, p.grad.abs().max().item())
+
         ppl = torch.exp(loss).item()
         logger.log_step(step_count, **{"lora_pythia_loss": loss.item(), 'lora_pythia_ppl': ppl})
         epoch_losses.append(loss.item())
