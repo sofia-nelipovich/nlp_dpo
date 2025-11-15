@@ -36,9 +36,13 @@ class LoRALayer(nn.Module):
         """
         # Основной замороженный вывод
         # print(x.shape, self.weight.shape, self.bias.shape)
-        out = torch.nn.functional.linear(x, self.weight.T, self.bias)
+        if x.shape[1] != self.weight.shape[0]:
+            out = torch.nn.functional.linear(x, self.weight.T, self.bias)
+            lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A).T) * (self.alpha / self.r)
+        else:
+            out = torch.nn.functional.linear(x, self.weight, self.bias)
+            lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A)) * (self.alpha / self.r)
         # LoRA-компонента
-        lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A).T) * (self.alpha / self.r)
         return out + lora_out
 
     def num_trainable_parameters(self):
