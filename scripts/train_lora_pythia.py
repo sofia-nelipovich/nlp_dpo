@@ -91,6 +91,7 @@ for layer in model.gpt_neox.layers:
         param.requires_grad = True
 
 # --- OPTIMIZER ---
+lora_params = []
 for layer in model.gpt_neox.layers:
     lora_params += list(layer.attention.query_key_value.parameters())
 optimizer = torch.optim.Adam(lora_params, lr=2e-4)

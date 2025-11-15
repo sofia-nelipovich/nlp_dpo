@@ -24,9 +24,9 @@ class LoRALayer(nn.Module):
 
         # Создаём обучаемые матрицы B и A для low-rank адаптации
         # B: (out_channels, r) -- инициализируется нулями
-        self.B = nn.Parameter(torch.zeros(self.out_channels, r)).to(dtype=torch.float16)
+        self.B = nn.Parameter(torch.zeros(self.out_channels, r, dtype=torch.float16))
         # A: (r, in_channels) -- инициализируется случайно, т.к. градиенты для A пойдут сразу
-        self.A = nn.Parameter(torch.randn(r, self.in_channels) * 0.01).to(dtype=torch.float16) # N(0, 0.01)
+        self.A = nn.Parameter(torch.randn(r, self.in_channels, dtype=torch.float16) * 0.01) # N(0, 0.01)
 
 
     def forward(self, x):
