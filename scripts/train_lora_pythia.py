@@ -74,7 +74,7 @@ class DialogDataset(Dataset):
 
 raw_data = load_dataset("Anthropic/hh-rlhf", split="train")
 samples = [split_prompt_response(item['chosen']) for item in raw_data if "Assistant:" in item['chosen']]
-samples = samples[:1000]  # уменьшить для демо, иначе памяти не хватит
+samples = samples[:400]  # уменьшить для демо, иначе памяти не хватит
 
 # --- TOKENIZATION ---
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
