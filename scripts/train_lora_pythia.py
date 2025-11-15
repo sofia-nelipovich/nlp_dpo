@@ -17,9 +17,9 @@ MODEL_NAME = "EleutherAI/pythia-1.4b"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 1
 MAX_LENGTH = 512
-EPOCHS = 4
-LORA_R = 4
-LORA_ALPHA = 1
+EPOCHS = 1
+LORA_R = 8
+LORA_ALPHA = 16
 RUN_NAME = "lora_hh_rlhf_demo"
 
 
