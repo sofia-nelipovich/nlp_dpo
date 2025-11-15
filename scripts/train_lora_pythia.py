@@ -9,7 +9,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from torch.utils.data import Dataset, DataLoader
 from logger.logger import WandbLogger
 from lora.module import LoRALayer
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
+
 
 # --- PARAMETERS ---
 MODEL_NAME = "EleutherAI/pythia-1.4b"
@@ -106,7 +107,7 @@ logger.log_config({
     "n_samples": len(train_ds)
 })
 
-scaler = GradScaler()
+scaler = GradScaler('cuda')
 
 # --- TRAIN LOOP ---
 logger.watch(model)
@@ -118,7 +119,7 @@ for epoch in range(EPOCHS):
         input_ids = batch["input_ids"].to(DEVICE)
         attn = batch["attention_mask"].to(DEVICE)
         labels = batch["labels"].to(DEVICE)
-        with autocast(device_type='cuda'):
+        with autocast('cuda'):
             outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
             loss = outputs.loss
         # Масштабируем градиенты
