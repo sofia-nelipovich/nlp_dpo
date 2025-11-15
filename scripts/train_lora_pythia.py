@@ -9,14 +9,14 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from torch.utils.data import Dataset, DataLoader
 from logger.logger import WandbLogger
 from lora.module import LoRALayer
-
+from torch.cuda.amp import autocast, GradScaler
 
 # --- PARAMETERS ---
 MODEL_NAME = "EleutherAI/pythia-1.4b"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 1
 MAX_LENGTH = 512
-EPOCHS = 10
+EPOCHS = 4
 LORA_R = 8
 LORA_ALPHA = 16
 RUN_NAME = "lora_hh_rlhf_demo"
@@ -61,7 +61,7 @@ class DialogDataset(Dataset):
 
 raw_data = load_dataset("Anthropic/hh-rlhf", split="train")
 samples = [split_prompt_response(item['chosen']) for item in raw_data if "Assistant:" in item['chosen']]
-samples = samples[:3000]  # уменьшить для демо, иначе памяти не хватит
+samples = samples[:2000]  # уменьшить для демо, иначе памяти не хватит
 
 # --- TOKENIZATION ---
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
@@ -94,7 +94,7 @@ for layer in model.gpt_neox.layers:
 lora_params = []
 for layer in model.gpt_neox.layers:
     lora_params += list(layer.attention.query_key_value.parameters())
-optimizer = torch.optim.Adam(lora_params, lr=2e-4)
+optimizer = torch.optim.Adam(lora_params, lr=5e-5)
 
 # --- WANDB CONFIG ---
 logger.log_config({
@@ -105,6 +105,20 @@ logger.log_config({
     "max_length": MAX_LENGTH,
     "n_samples": len(train_ds)
 })
+import torch
+
+
+scaler = GradScaler()
+for epoch in range(num_epochs):
+    for batch in dataloader:
+        optimizer.zero_grad()
+        with autocast(device_type='cuda'):
+            outputs = model(input_ids)
+            loss = loss_fn(outputs, targets)
+        # Масштабируем градиенты
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
 # --- TRAIN LOOP ---
 logger.watch(model)
@@ -116,12 +130,18 @@ for epoch in range(EPOCHS):
         input_ids = batch["input_ids"].to(DEVICE)
         attn = batch["attention_mask"].to(DEVICE)
         labels = batch["labels"].to(DEVICE)
-        outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
-        loss = outputs.loss
-        loss.backward()
-        optimizer.step()
+        with autocast(device_type='cuda'):
+            outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
+            loss = outputs.loss
+        # Масштабируем градиенты
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
 
-        logger.log_step(step_count, **{"lora_loss": loss.item()})
+        optimizer.step()
+        ppl = torch.exp(loss).item()
+        logger.log_step({}, step=step_count)
+        logger.log_step(step_count, **{"lora_pythia_loss": loss.item(), 'lora_pythia_ppl': ppl})
         epoch_losses.append(loss.item())
         step_count += 1
     print(f"Epoch {epoch+1}: Mean loss {np.mean(epoch_losses):.4f}")
