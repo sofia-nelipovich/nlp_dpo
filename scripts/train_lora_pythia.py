@@ -170,8 +170,6 @@ for epoch in range(EPOCHS):
         step_count += 1
     print(f"Epoch {epoch+1}: Mean loss {np.mean(epoch_losses):.4f}")
 
-logger.finish()
-
 # --- EVAL GENERATION ---
 model.eval()
 import random
@@ -186,3 +184,5 @@ for _ in range(5):
     print("PROMPT:", prompt)
     print("GENERATED:", gen_text.replace(prompt, '').strip())
     print("TRUE:", samples[idx]['response'])
+
+logger.finish()
