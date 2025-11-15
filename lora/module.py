@@ -19,14 +19,14 @@ class LoRALayer(nn.Module):
         self.alpha = alpha
 
         # Сохраняем исходные замороженные веса
-        self.weight = original_linear.weight.detach().clone()
-        self.bias = original_linear.bias.detach().clone() if original_linear.bias is not None else None
+        self.weight = original_linear.weight.detach().clone().to(dtype=torch.float16)
+        self.bias = original_linear.bias.detach().clone().to(dtype=torch.float16) if original_linear.bias is not None else None
 
         # Создаём обучаемые матрицы B и A для low-rank адаптации
         # B: (out_channels, r) -- инициализируется нулями
-        self.B = nn.Parameter(torch.zeros(self.out_channels, r))
+        self.B = nn.Parameter(torch.zeros(self.out_channels, r)).to(dtype=torch.float16)
         # A: (r, in_channels) -- инициализируется случайно, т.к. градиенты для A пойдут сразу
-        self.A = nn.Parameter(torch.randn(r, self.in_channels) * 0.01) # N(0, 0.01)
+        self.A = nn.Parameter(torch.randn(r, self.in_channels) * 0.01).to(dtype=torch.float16) # N(0, 0.01)
 
 
     def forward(self, x):
