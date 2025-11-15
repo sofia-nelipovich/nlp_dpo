@@ -140,7 +140,6 @@ for epoch in range(EPOCHS):
 
         optimizer.step()
         ppl = torch.exp(loss).item()
-        logger.log_step({}, step=step_count)
         logger.log_step(step_count, **{"lora_pythia_loss": loss.item(), 'lora_pythia_ppl': ppl})
         epoch_losses.append(loss.item())
         step_count += 1
