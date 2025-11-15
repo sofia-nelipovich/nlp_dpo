@@ -130,19 +130,19 @@ step_count = 0
 for epoch in range(EPOCHS):
     epoch_losses = []
     for batch in dataloader:
-        print(batch["input_ids"].shape)
-        print(batch["input_ids"])
-        print("Any nan?", torch.isnan(batch["input_ids"].float()).any())
-        print("Max value:", batch["input_ids"].max())
-        print("Min value:", batch["input_ids"].min())
-        print("dtype:", batch["input_ids"].dtype)
+        # print(batch["input_ids"].shape)
+        # print(batch["input_ids"])
+        # print("Any nan?", torch.isnan(batch["input_ids"].float()).any())
+        # print("Max value:", batch["input_ids"].max())
+        # print("Min value:", batch["input_ids"].min())
+        # print("dtype:", batch["input_ids"].dtype)
 
         optimizer.zero_grad()
         input_ids = batch["input_ids"].to(DEVICE)
         attn = batch["attention_mask"].to(DEVICE)
         labels = batch["labels"].to(DEVICE)
-        print("Batch input ids:", input_ids)
-        print("Is nan in input_ids?", torch.isnan(input_ids.float()).any())
+        # print("Batch input ids:", input_ids)
+        # print("Is nan in input_ids?", torch.isnan(input_ids.float()).any())
 
         # with autocast('cuda'):
         #     outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
@@ -157,7 +157,7 @@ for epoch in range(EPOCHS):
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-        print(loss.item())
+        # print(loss.item())
 
         # print('Loss:', loss.item())
         # for name, p in model.named_parameters():
