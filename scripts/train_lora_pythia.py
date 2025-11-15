@@ -14,7 +14,7 @@ from lora.module import LoRALayer
 # --- PARAMETERS ---
 MODEL_NAME = "EleutherAI/pythia-1.4b"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-BATCH_SIZE = 256
+BATCH_SIZE = 2
 MAX_LENGTH = 512
 EPOCHS = 10
 LORA_R = 8
