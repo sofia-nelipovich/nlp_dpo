@@ -38,7 +38,8 @@ def preprocess(example):
     tokens = tokenizer(full_text, truncation=True, max_length=MAX_LENGTH, padding='max_length')
     labels = tokens["input_ids"].copy()
     # mask prompt tokens in loss
-    prompt_len = len(tokenizer(source)["input_ids"])
+    prompt_tokens = tokenizer(source, truncation=True, max_length=MAX_LENGTH, padding='max_length')["input_ids"]
+    prompt_len = len(prompt_tokens)
     labels[:prompt_len] = [-100]*prompt_len
     return {"input_ids": tokens["input_ids"], "attention_mask": tokens["attention_mask"], "labels": labels}
 
