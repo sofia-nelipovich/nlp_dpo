@@ -28,20 +28,30 @@ class LoRALayer(nn.Module):
         # A: (r, in_channels) -- инициализируется случайно, т.к. градиенты для A пойдут сразу
         self.A = nn.Parameter(torch.randn(r, self.in_channels, dtype=torch.float32) * 0.01) # N(0, 0.01)
 
+        print('B init:', self.B.mean(), self.B.std())
+        print('A init:', self.A.mean(), self.A.std())
+
+
 
     def forward(self, x):
         """
         Сначала считаем стандартный выход (замороженный), потом добавляем low-rank слагаемое BA.
         h = Wx + BAx, где W - pretrained, B и A - обучаемые.
         """
+        # print(x.dtype, self.B.dtype, self.A.dtype)
+        if torch.isnan(x).any():
+            print("NaN in input x!")
+        lora_mat = torch.matmul(self.B, self.A)
+        if torch.isnan(lora_mat).any() or torch.isinf(lora_mat).any():
+            print("NaN or Inf in lora_mat", lora_mat)
         # Основной замороженный вывод
         # print(x.shape, self.weight.shape, self.bias.shape)
         if x.shape[1] != self.weight.shape[0]:
             out = torch.nn.functional.linear(x, self.weight, self.bias)
-            lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A)) * (self.alpha / self.r)
+            lora_out = torch.nn.functional.linear(x, lora_mat) * (self.alpha / self.r)
         else:
             out = torch.nn.functional.linear(x, self.weight.T, self.bias)
-            lora_out = torch.nn.functional.linear(x, torch.matmul(self.B, self.A).T) * (self.alpha / self.r)
+            lora_out = torch.nn.functional.linear(x, lora_mat.T) * (self.alpha / self.r)
         # LoRA-компонента
         return out + lora_out
 

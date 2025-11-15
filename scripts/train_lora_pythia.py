@@ -86,7 +86,7 @@ train_ds = DialogDataset(data_tkn)
 dataloader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
 
 # --- MODEL & LORA ---
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float16).to(DEVICE)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to(DEVICE)
 
 print(model)
 
@@ -145,10 +145,10 @@ for epoch in range(EPOCHS):
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
         optimizer.step()
-        print('Loss:', loss.item())
-        for name, p in model.named_parameters():
-            if p.grad is not None:
-                print(name, p.grad.abs().max().item())
+        # print('Loss:', loss.item())
+        # for name, p in model.named_parameters():
+        #     if p.grad is not None:
+        #         print(name, p.grad.abs().max().item())
 
         ppl = torch.exp(loss).item()
         logger.log_step(step_count, **{"lora_pythia_loss": loss.item(), 'lora_pythia_ppl': ppl})
