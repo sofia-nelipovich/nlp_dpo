@@ -121,7 +121,7 @@ for epoch in range(EPOCHS):
         loss.backward()
         optimizer.step()
 
-        logger.log_step({"lora_loss": loss.item()}, step=step_count)
+        logger.log_step(step_count, {"lora_loss": loss.item()})
         epoch_losses.append(loss.item())
         step_count += 1
     print(f"Epoch {epoch+1}: Mean loss {np.mean(epoch_losses):.4f}")
