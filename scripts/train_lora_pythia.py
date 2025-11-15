@@ -18,8 +18,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 1
 MAX_LENGTH = 512
 EPOCHS = 4
-LORA_R = 8
-LORA_ALPHA = 16
+LORA_R = 4
+LORA_ALPHA = 1
 RUN_NAME = "lora_hh_rlhf_demo"
 
 
@@ -141,6 +141,8 @@ for epoch in range(EPOCHS):
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
+
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
         optimizer.step()
         print('Loss:', loss.item())
