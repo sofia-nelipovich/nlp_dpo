@@ -105,20 +105,8 @@ logger.log_config({
     "max_length": MAX_LENGTH,
     "n_samples": len(train_ds)
 })
-import torch
-
 
 scaler = GradScaler()
-for epoch in range(num_epochs):
-    for batch in dataloader:
-        optimizer.zero_grad()
-        with autocast(device_type='cuda'):
-            outputs = model(input_ids)
-            loss = loss_fn(outputs, targets)
-        # Масштабируем градиенты
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
 
 # --- TRAIN LOOP ---
 logger.watch(model)
