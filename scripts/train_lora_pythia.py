@@ -22,8 +22,6 @@ LORA_R = 8
 LORA_ALPHA = 16
 RUN_NAME = "lora_hh_rlhf_demo"
 
-# --- Wandb logger ---
-logger = WandbLogger(project="nlp_dpo", run_name=RUN_NAME)
 
 # --- DATA LOAD & SPLIT ---
 def split_prompt_response(sample):
@@ -33,16 +31,30 @@ def split_prompt_response(sample):
     return {"prompt": prompt, "response": response}
 
 def preprocess(example):
-    source = example["prompt"]
-    target = example["response"]
-    full_text = source + " " + target
-    tokens = tokenizer(full_text, truncation=True, max_length=MAX_LENGTH, padding='max_length')
-    labels = tokens["input_ids"].copy()
-    # mask prompt tokens in loss
-    prompt_tokens = tokenizer(source, truncation=True, max_length=MAX_LENGTH, padding='max_length')["input_ids"]
-    prompt_len = len(prompt_tokens)
-    labels[:prompt_len] = [-100]*prompt_len
-    return {"input_ids": tokens["input_ids"], "attention_mask": tokens["attention_mask"], "labels": labels}
+    prompt = example['prompt']
+    response = example['response']
+
+    prompt_tokens = tokenizer(prompt, truncation=True, max_length=MAX_LENGTH)["input_ids"]
+    response_tokens = tokenizer(response, truncation=True, max_length=MAX_LENGTH)["input_ids"]
+
+    full_text = prompt + " " + response
+    full_tokens = tokenizer(full_text, truncation=True, max_length=MAX_LENGTH, padding='max_length')["input_ids"]
+
+    labels = full_tokens.copy()
+    # Маскируем только реальные токены prompt (до их длины но не превышая MAX_LENGTH)
+    prompt_len = min(len(prompt_tokens), MAX_LENGTH)
+    labels[:prompt_len] = [-100] * prompt_len
+
+    # Проверка: есть размаскированные токены? Если нет - дропаем
+    if all(l == -100 for l in labels):
+        return None
+
+    return {
+        "input_ids": full_tokens,
+        "attention_mask": [1 if t != tokenizer.pad_token_id else 0 for t in full_tokens],
+        "labels": labels
+    }
+
 
 # --- DATASET ---
 class DialogDataset(Dataset):
@@ -68,7 +80,7 @@ samples = samples[:2000]  # уменьшить для демо, иначе па�
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
 
-data_tkn = [preprocess(s) for s in samples]
+data_tkn = [x for x in (preprocess(d) for d in samples) if x is not None]
 
 train_ds = DialogDataset(data_tkn)
 dataloader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
@@ -96,6 +108,9 @@ lora_params = []
 for layer in model.gpt_neox.layers:
     lora_params += list(layer.attention.query_key_value.parameters())
 optimizer = torch.optim.Adam(lora_params, lr=5e-5)
+
+# --- Wandb logger ---
+logger = WandbLogger(project="nlp_dpo", run_name=RUN_NAME)
 
 # --- WANDB CONFIG ---
 logger.log_config({
