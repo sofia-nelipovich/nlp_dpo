@@ -28,8 +28,8 @@ class LoRALayer(nn.Module):
         # A: (r, in_channels) -- инициализируется случайно, т.к. градиенты для A пойдут сразу
         self.A = nn.Parameter(torch.randn(r, self.in_channels, dtype=torch.float32) * 0.01) # N(0, 0.01)
 
-        print('B init:', self.B.mean(), self.B.std())
-        print('A init:', self.A.mean(), self.A.std())
+        # print('B init:', self.B.mean(), self.B.std())
+        # print('A init:', self.A.mean(), self.A.std())
 
 
 
