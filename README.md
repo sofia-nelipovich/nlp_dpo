@@ -1,7 +1,4 @@
 # nlp_dpo
-
-Вот пример README.md для твоего проекта на GitHub с поддержкой DPO, SFT и LoRA, включая шаблон для ссылки на отчёт в wandb:
-
 ***
 
 ```markdown
