@@ -82,7 +82,7 @@ for epoch in range(epochs):
         bw_time = time.time() - start_bw
         optimizer.step()
 
-        mem = torch.cuda.max_memory_allocated() / 1024**2 if torch.cuda.is_available() else 0
+        mem = torch.cuda.memory_allocated() / 1024**2 if torch.cuda.is_available() else 0
         ft_fw_times.append(fw_time)
         ft_bw_times.append(bw_time)
         ft_mems.append(mem)
@@ -150,7 +150,7 @@ for epoch in range(epochs):
         bw_time = time.time() - start_bw
         optimizer.step()
 
-        mem = torch.cuda.max_memory_allocated() / 1024**2 if torch.cuda.is_available() else 0
+        mem = torch.cuda.memory_allocated() / 1024**2 if torch.cuda.is_available() else 0
         lora_fw_times.append(fw_time)
         lora_bw_times.append(bw_time)
         lora_mems.append(mem)
