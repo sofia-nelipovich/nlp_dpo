@@ -87,9 +87,12 @@ logger.log_config({
 
 logger.watch(model)
 
+ref_model.to('cpu')
+for layer in ref_model.gpt_neox.layers:
+    layer.attention.query_key_value.to('cpu')
+
 # --- DPO TRAIN LOOP ---
 model.train()
-ref_model.to('cpu')
 step_count = 0
 for epoch in range(EPOCHS):
     losses = []
