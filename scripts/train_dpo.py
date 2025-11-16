@@ -51,7 +51,7 @@ tokenizer.pad_token = tokenizer.eos_token
 
 
 # ---- Reference (frozen) model ----
-ref_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, dtype=torch.float32).to(DEVICE)
+ref_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to(DEVICE)
 patch_lora(ref_model, LORA_R, LORA_ALPHA, DEVICE)
 ref_sd = load_file(f"{artifact_dir}/model.safetensors")
 ref_model.load_state_dict(ref_sd, strict=False)
@@ -60,7 +60,7 @@ for p in ref_model.parameters():
     p.requires_grad = False
 
 # ---- Main model for DPO fine-tuning ----
-model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, dtype=torch.float32).to(DEVICE)
+model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to(DEVICE)
 patch_lora(model, LORA_R, LORA_ALPHA, DEVICE)
 sd = load_file(f"{artifact_dir}/model.safetensors")
 model.load_state_dict(sd, strict=False)
