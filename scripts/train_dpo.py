@@ -71,6 +71,7 @@ model.load_state_dict(sd, strict=False)
 
 for p in model.parameters():
     p.requires_grad = False
+
 for p in get_lora_params(model):
     p.requires_grad = True
 
@@ -79,7 +80,7 @@ ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[:200]")
 dataset = DPOPairDataset(ds_hh, tokenizer, max_length=MAX_LENGTH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-optimizer = torch.optim.AdamW(get_lora_params(model), lr=5e-5)
+optimizer = torch.optim.AdamW(get_lora_params(model), lr=5e-4)
 
 # --- WANDB CONFIG ---
 logger.log_config({
@@ -108,6 +109,10 @@ for epoch in range(EPOCHS):
         del loss
         torch.cuda.empty_cache()
         step_count += 1
+        print("LoRA grad stats:")
+        for p in get_lora_params(model):
+            print(f"mean={p.data.mean():.6f}, grad={p.grad.abs().mean().item():.6e}")
+
     print(f"Epoch {epoch+1}: Mean dpo loss {np.mean(losses):.4f}")
 
 # --- EVAL GENERATION ---
@@ -134,3 +139,5 @@ for idx in eval_indices:
     print("SFT_GEN:", sft_out.replace(prompt, '').strip())
     print("TRUE_CHOSEN:", true_chosen)
     print("TRUE_REJECTED:", true_rejected)
+
+logger.finish()
