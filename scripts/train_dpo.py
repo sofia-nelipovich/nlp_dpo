@@ -58,7 +58,7 @@ ref_model.load_state_dict(ref_sd, strict=False)
 ref_model.eval()
 for p in ref_model.parameters():
     p.requires_grad = False
-
+ 
 # ---- Main model for DPO fine-tuning ----
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to(DEVICE)
 patch_lora(model, LORA_R, LORA_ALPHA, DEVICE)
@@ -89,6 +89,7 @@ logger.watch(model)
 
 # --- DPO TRAIN LOOP ---
 model.train()
+ref_model.to('cpu')
 step_count = 0
 for epoch in range(EPOCHS):
     losses = []
@@ -100,6 +101,8 @@ for epoch in range(EPOCHS):
         optimizer.step()
         logger.log_step(step_count, **{"dpo_loss": loss.item()})
         losses.append(loss.item())
+        del loss
+        torch.cuda.empty_cache()
         step_count += 1
     print(f"Epoch {epoch+1}: Mean dpo loss {np.mean(losses):.4f}")
 
