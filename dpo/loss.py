@@ -25,10 +25,14 @@ def dpo_loss(model, ref_model, batch, tokenizer, beta=0.1):
     rejected_tokens = tokenize_batch(prompt, rejected)
 
 
-    def mean_log_prob(model, tokens):
-        with torch.no_grad():
+    def mean_log_prob(model, tokens, requires_grad=False):
+        # Для обучаемой модели: requires_grad=True - forward без no_grad
+        # Для референсной: requires_grad=False —-forward c no_grad
+        if requires_grad:
             logits = model(**tokens).logits
-        input_ids = tokens['input_ids']
+        else:
+            with torch.no_grad():
+                logits = model(**tokens).logits
         # Отбираем пер-токен логиты для ответа
         shift_logits = logits[:, :-1, :]
         shift_labels = input_ids[:, 1:]
@@ -41,10 +45,10 @@ def dpo_loss(model, ref_model, batch, tokenizer, beta=0.1):
         return log_prob
 
     # Считаем log_prob для всех комбинаций
-    chosen_logprob_model = mean_log_prob(model, chosen_tokens)
-    rejected_logprob_model = mean_log_prob(model, rejected_tokens)
-    chosen_logprob_ref = mean_log_prob(ref_model, chosen_tokens)
-    rejected_logprob_ref = mean_log_prob(ref_model, rejected_tokens)
+    chosen_logprob_model = mean_log_prob(model, chosen_tokens, requires_grad=True)
+    rejected_logprob_model = mean_log_prob(model, rejected_tokens, requires_grad=True)
+    chosen_logprob_ref = mean_log_prob(ref_model, chosen_tokens, requires_grad=False)
+    rejected_logprob_ref = mean_log_prob(ref_model, rejected_tokens, requires_grad=False)
 
     # Считаем формулу DPO Loss
     delta_model = chosen_logprob_model - rejected_logprob_model
