@@ -55,7 +55,7 @@ labels = input_ids.clone()
 
 epochs = int(args.epochs)
 
-# ========== Fine-Tuning (FT) ==========
+# --- Fine-Tuning (FT) ---
 model_ft = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
 for p in model_ft.parameters():
     p.requires_grad = True
@@ -112,7 +112,7 @@ gc.collect()
 if torch.cuda.is_available():
     torch.cuda.empty_cache()
 
-# ========== LoRA ==========
+# --- LoRA ---
 logger = WandbLogger(project='nlp_dpo', run_name=args.run_name + '_lora')
 model_lora = AutoModelForCausalLM.from_pretrained(model_name).to(DEVICE)
 # Patch Conv1D -> LoRA (заменяем только первый mlp.c_fc)

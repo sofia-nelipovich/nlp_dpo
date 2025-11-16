@@ -17,8 +17,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 BATCH_SIZE = 1
 MAX_LENGTH = 512
 EPOCHS = 1
-LORA_R = 8
-LORA_ALPHA = 16
+LORA_R = 16
+LORA_ALPHA = 32
 RUN_NAME = "lora_hh_rlhf_demo"
 
 
@@ -73,7 +73,7 @@ class DialogDataset(Dataset):
 
 raw_data = load_dataset("Anthropic/hh-rlhf", split="train")
 samples = [split_prompt_response(item['chosen']) for item in raw_data if "Assistant:" in item['chosen']]
-samples = samples[:400]  # уменьшить для демо, иначе памяти не хватит
+samples = samples[:300]  # уменьшить для демо, иначе памяти не хватит
 
 # --- TOKENIZATION ---
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)

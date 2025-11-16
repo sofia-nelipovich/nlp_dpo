@@ -21,8 +21,8 @@ MAX_LENGTH = 512
 BATCH_SIZE = 1
 EPOCHS = 1
 BETA = 0.1
-LORA_R = 8
-LORA_ALPHA = 16
+LORA_R = 16
+LORA_ALPHA = 32
 RUN_NAME = "dpo_demo"
 
 def patch_lora(model, r, alpha, device):
@@ -36,6 +36,15 @@ def get_lora_params(model):
     for layer in model.gpt_neox.layers:
         params.extend(list(layer.attention.query_key_value.parameters()))
     return params
+
+# --- EVAL GENERATION ---
+def generate(model, prompt, max_new_tokens=50):
+    model.eval()
+    device = next(model.parameters()).device
+    input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_LENGTH).input_ids.to(device)
+    gen_ids = model.generate(input_ids, max_new_tokens=max_new_tokens, pad_token_id=tokenizer.eos_token_id)
+    gen_text = tokenizer.decode(gen_ids[0], skip_special_tokens=True)
+    return gen_text
 
 
 # --- Wandb logger ---
@@ -77,7 +86,7 @@ for p in get_lora_params(model):
     p.requires_grad = True
 
 # --- DATLOADER ---
-ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[1000:1300]")
+ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[1000:1200]")
 dataset = DPOPairDataset(ds_hh, tokenizer, max_length=MAX_LENGTH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
@@ -114,13 +123,8 @@ for epoch in range(EPOCHS):
             print(f"Mean Loss last 10: {np.mean(losses[-10:]):.4f}")
     print(f"Epoch {epoch+1}: Mean dpo loss {np.mean(losses):.4f}")
 
-# --- EVAL GENERATION ---
-def generate(model, prompt, max_new_tokens=50):
-    model.eval()
-    input_ids = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=MAX_LENGTH).input_ids.to(DEVICE)
-    gen_ids = model.generate(input_ids, max_new_tokens=max_new_tokens, pad_token_id=tokenizer.eos_token_id)
-    gen_text = tokenizer.decode(gen_ids[0], skip_special_tokens=True)
-    return gen_text
+
+# --- EVAL: сравнение ответов DPO и SFT моделей ---
 
 import random
 eval_indices = random.sample(range(len(dataset)), 5)
