@@ -51,8 +51,12 @@ tokenizer.pad_token = tokenizer.eos_token
 
 
 # ---- Reference (frozen) model ----
-ref_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to(DEVICE)
-patch_lora(ref_model, LORA_R, LORA_ALPHA, DEVICE)
+ref_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float32).to('cpu')
+patch_lora(ref_model, LORA_R, LORA_ALPHA, 'cpu')
+
+for n, p in ref_model.named_parameters():
+    assert p.device.type == 'cpu', f"{n} находится на {p.device}!"
+
 ref_sd = load_file(f"{artifact_dir}/model.safetensors")
 ref_model.load_state_dict(ref_sd, strict=False)
 ref_model.eval()
@@ -64,6 +68,7 @@ model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, torch_dtype=torch.float
 patch_lora(model, LORA_R, LORA_ALPHA, DEVICE)
 sd = load_file(f"{artifact_dir}/model.safetensors")
 model.load_state_dict(sd, strict=False)
+
 for p in model.parameters():
     p.requires_grad = False
 for p in get_lora_params(model):
@@ -86,10 +91,6 @@ logger.log_config({
 })
 
 logger.watch(model)
-
-ref_model.to('cpu')
-for layer in ref_model.gpt_neox.layers:
-    layer.attention.query_key_value.to('cpu')
 
 # --- DPO TRAIN LOOP ---
 model.train()
