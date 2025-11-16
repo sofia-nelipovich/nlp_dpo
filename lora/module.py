@@ -46,12 +46,16 @@ class LoRALayer(nn.Module):
             print("NaN or Inf in lora_mat", lora_mat)
         # Основной замороженный вывод
         # print(x.shape, self.weight.shape, self.bias.shape)
-        if x.shape[1] != self.weight.shape[0]:
+        # Для разных реализаций Linear может потребоваться транспонирование весов
+        try:
             out = torch.nn.functional.linear(x, self.weight, self.bias)
-            lora_out = torch.nn.functional.linear(x, lora_mat) * (self.alpha / self.r)
-        else:
+        except Exception as e:
             out = torch.nn.functional.linear(x, self.weight.T, self.bias)
-            lora_out = torch.nn.functional.linear(x, lora_mat.T) * (self.alpha / self.r)
+        
+        try:
+            lora_out = torch.nn.functional.linear(x, lora_mat) * (self.alpha / self.r)
+        except Exception as e:
+            lora_out = torch.nn.functional.linear(x, lora_mat.T) * (self.alpha / self.r) 
         # LoRA-компонента
         return out + lora_out
 
