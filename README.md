@@ -1,7 +1,6 @@
 # nlp_dpo
 ***
 
-```markdown
 # Direct Preference Optimization (DPO) Fine-Tuning with LoRA
 
 Этот проект реализует обучение языковой модели с помощью **DPO** (Direct Preference Optimization), согласно [оригинальной статье](https://arxiv.org/pdf/2305.18290), с использованием LoRA-адаптеров для эффективного дообучения на ограниченных GPU-ресурсах.
