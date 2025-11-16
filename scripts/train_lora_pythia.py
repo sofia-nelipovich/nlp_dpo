@@ -9,7 +9,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from torch.utils.data import Dataset, DataLoader
 from logger.logger import WandbLogger
 from lora.module import LoRALayer
-from torch.amp import autocast, GradScaler
 
 
 # --- PARAMETERS ---
