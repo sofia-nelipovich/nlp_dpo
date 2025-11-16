@@ -33,6 +33,7 @@ def dpo_loss(model, ref_model, batch, tokenizer, beta=0.1):
         else:
             with torch.no_grad():
                 logits = model(**tokens).logits
+        input_ids = tokens['input_ids']
         # Отбираем пер-токен логиты для ответа
         shift_logits = logits[:, :-1, :]
         shift_labels = input_ids[:, 1:]
