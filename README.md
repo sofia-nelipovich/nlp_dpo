@@ -1,5 +1,4 @@
 # nlp_dpo
-***
 
 # Direct Preference Optimization (DPO) Fine-Tuning with LoRA
 
@@ -27,11 +26,3 @@
 
 - LoRA: rank (LORA_R), alpha (LORA_ALPHA)
 - DPO: beta коэффициент, learning rate, batch size, max_length
-
----
-
-```
-[Wandb Report](https://api.wandb.ai/links/sofia-nelipovich-hse-university/ymzvuckg)
-```
-
----
