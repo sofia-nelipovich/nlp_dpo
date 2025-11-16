@@ -1,26 +1,26 @@
 import torch
 import torch.nn.functional as F
 
-def dpo_loss(
-    model,
-    ref_model,
-    batch,
-    tokenizer,
-    beta=0.1
-):
-    # Промпт + хорошие ответы
+def dpo_loss(model, ref_model, batch, tokenizer, beta=0.1):
     prompt = batch['prompt']
     chosen = batch['chosen']
     rejected = batch['rejected']
 
-    # Токенизация для двух моделей
-    def tokenize_batch(batch_prompts, batch_responses):
-        # На вход списки строк одного размера
-        texts = [f"{p} {r}" for p, r in zip(batch_prompts, batch_responses)]
-        return tokenizer(texts, return_tensors='pt', truncation=True, padding=True, max_length=512)
+    device = next(model.parameters()).device  # автоматически определяем cuda/cpu
 
+    def tokenize_batch(prompts, responses):
+        texts = [f"{p} {r}" for p, r in zip(prompts, responses)]
+        tokens = tokenizer(
+            texts,
+            return_tensors='pt',
+            truncation=True,
+            padding=True,
+            max_length=512
+        )
+        for k in tokens:
+            tokens[k] = tokens[k].to(device)
+        return tokens
 
-    # Получаем log probability для chosen/rejected - в обеих моделях
     chosen_tokens = tokenize_batch(prompt, chosen)
     rejected_tokens = tokenize_batch(prompt, rejected)
 
