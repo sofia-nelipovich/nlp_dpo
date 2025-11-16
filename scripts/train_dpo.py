@@ -75,7 +75,7 @@ for p in get_lora_params(model):
     p.requires_grad = True
 
 # --- DATLOADER ---
-ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[:1000]")
+ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[:200]")
 dataset = DPOPairDataset(ds_hh, tokenizer, max_length=MAX_LENGTH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
