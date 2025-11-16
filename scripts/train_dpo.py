@@ -37,6 +37,14 @@ def get_lora_params(model):
     return params
 
 
+# --- Wandb logger ---
+logger = WandbLogger(project="nlp_dpo", run_name=RUN_NAME)
+
+artifact = logger.run.use_artifact('sofia-nelipovich-hse-university/nlp_dpo/pythia_lora_sft_ref:latest', type='model')
+artifact_dir = artifact.download()  # путь к скачанному файлу/директории
+
+print("Downloaded to:", artifact_dir)
+
 # --- MODELS ---
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 tokenizer.pad_token = tokenizer.eos_token
@@ -45,7 +53,7 @@ tokenizer.pad_token = tokenizer.eos_token
 # ---- Reference (frozen) model ----
 ref_model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, dtype=torch.float32).to(DEVICE)
 patch_lora(ref_model, LORA_R, LORA_ALPHA, DEVICE)
-ref_sd = load_file(os.path.join(CHECKPOINT, "model.safetensors"))
+ref_sd = load_file(f"{artifact_dir}/model.safetensors")
 ref_model.load_state_dict(ref_sd, strict=False)
 ref_model.eval()
 for p in ref_model.parameters():
@@ -54,7 +62,7 @@ for p in ref_model.parameters():
 # ---- Main model for DPO fine-tuning ----
 model = AutoModelForCausalLM.from_pretrained(MODEL_NAME, dtype=torch.float32).to(DEVICE)
 patch_lora(model, LORA_R, LORA_ALPHA, DEVICE)
-sd = load_file(os.path.join(CHECKPOINT, "model.safetensors"))
+sd = load_file(f"{artifact_dir}/model.safetensors")
 model.load_state_dict(sd, strict=False)
 for p in model.parameters():
     p.requires_grad = False
@@ -67,9 +75,6 @@ dataset = DPOPairDataset(ds_hh, tokenizer, max_length=MAX_LENGTH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 optimizer = torch.optim.AdamW(get_lora_params(model), lr=5e-5)
-
-# --- Wandb logger ---
-logger = WandbLogger(project="nlp_dpo", run_name=RUN_NAME)
 
 # --- WANDB CONFIG ---
 logger.log_config({
