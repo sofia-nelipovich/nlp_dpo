@@ -130,45 +130,25 @@ step_count = 0
 for epoch in range(EPOCHS):
     epoch_losses = []
     for batch in dataloader:
-        # print(batch["input_ids"].shape)
-        # print(batch["input_ids"])
-        # print("Any nan?", torch.isnan(batch["input_ids"].float()).any())
-        # print("Max value:", batch["input_ids"].max())
-        # print("Min value:", batch["input_ids"].min())
-        # print("dtype:", batch["input_ids"].dtype)
 
         optimizer.zero_grad()
         input_ids = batch["input_ids"].to(DEVICE)
         attn = batch["attention_mask"].to(DEVICE)
         labels = batch["labels"].to(DEVICE)
-        # print("Batch input ids:", input_ids)
-        # print("Is nan in input_ids?", torch.isnan(input_ids.float()).any())
-
-        # with autocast('cuda'):
-        #     outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
-        #     loss = outputs.loss
-        # # Масштабируем градиенты
-        # scaler.scale(loss).backward()
-        # scaler.step(optimizer)
-        # scaler.update()
 
         outputs = model(input_ids=input_ids, attention_mask=attn, labels=labels)
         loss = outputs.loss
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
-        # print(loss.item())
-
-        # print('Loss:', loss.item())
-        # for name, p in model.named_parameters():
-        #     if p.grad is not None:
-        #         print(name, p.grad.abs().max().item())
 
         ppl = torch.exp(loss).item()
         logger.log_step(step_count, **{"lora_pythia_loss": loss.item(), 'lora_pythia_ppl': ppl})
         epoch_losses.append(loss.item())
         step_count += 1
     print(f"Epoch {epoch+1}: Mean loss {np.mean(epoch_losses):.4f}")
+
+model.save_pretrained("pythia_lora_sft_ref")
 
 # --- EVAL GENERATION ---
 model.eval()
