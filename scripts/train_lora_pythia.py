@@ -122,8 +122,6 @@ logger.log_config({
     "n_samples": len(train_ds)
 })
 
-scaler = GradScaler('cuda')
-
 # --- TRAIN LOOP ---
 logger.watch(model)
 step_count = 0
@@ -149,6 +147,8 @@ for epoch in range(EPOCHS):
     print(f"Epoch {epoch+1}: Mean loss {np.mean(epoch_losses):.4f}")
 
 model.save_pretrained("pythia_lora_sft_ref")
+
+logger.log_model_artifact("pythia_lora_sft_ref")
 
 # --- EVAL GENERATION ---
 model.eval()

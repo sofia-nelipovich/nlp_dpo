@@ -34,3 +34,13 @@ class WandbLogger:
 
     def finish(self):
         self.wandb.finish()
+
+    def log_model_artifact(self, model_dir, artifact_name="pythia_lora_sft_ref", description="SFT+LoRA reference model"):
+        artifact = self.wandb.Artifact(
+            name=artifact_name,
+            type="model",
+            description=description
+        )
+        artifact.add_dir(model_dir)
+        self.run.log_artifact(artifact)
+
