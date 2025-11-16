@@ -76,11 +76,11 @@ for p in get_lora_params(model):
     p.requires_grad = True
 
 # --- DATLOADER ---
-ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[:200]")
+ds_hh = load_dataset("Anthropic/hh-rlhf", split="train[1000:1300]")
 dataset = DPOPairDataset(ds_hh, tokenizer, max_length=MAX_LENGTH)
 dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-optimizer = torch.optim.AdamW(get_lora_params(model), lr=5e-4)
+optimizer = torch.optim.AdamW(get_lora_params(model), lr=2e-4)
 
 # --- WANDB CONFIG ---
 logger.log_config({
@@ -101,18 +101,16 @@ for epoch in range(EPOCHS):
     for batch in tqdm(dataloader):
         torch.cuda.empty_cache()
         optimizer.zero_grad()
-        loss = dpo_loss(model, ref_model, batch, tokenizer, BETA)
+        loss, delta_model, delta_ref = dpo_loss(model, ref_model, batch, tokenizer, BETA)
         loss.backward()
         optimizer.step()
-        logger.log_step(step_count, **{"dpo_loss": loss.item()})
+        logger.log_step(step_count, **{"dpo_loss": loss.item(), "dpo_delta_model_mean": delta_model.mean().item(), "dpo_delta_ref_mean": delta_ref.mean().item()})
         losses.append(loss.item())
         del loss
         torch.cuda.empty_cache()
         step_count += 1
-        print("LoRA grad stats:")
-        for p in get_lora_params(model):
-            print(f"mean={p.data.mean():.6f}, grad={p.grad.abs().mean().item():.6e}")
-
+        if step_count % 10 == 0:
+            print(f"Mean Loss last 10: {np.mean(losses[-10:]):.4f}")
     print(f"Epoch {epoch+1}: Mean dpo loss {np.mean(losses):.4f}")
 
 # --- EVAL GENERATION ---

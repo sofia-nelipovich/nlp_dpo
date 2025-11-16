@@ -54,4 +54,4 @@ def dpo_loss(model, ref_model, batch, tokenizer, beta=0.1):
     delta_ref = delta_ref.to(delta_model.device)   # Приводим к одному устройству
     dpo_term = beta * (delta_model - delta_ref)
     loss = -torch.log(torch.sigmoid(dpo_term)).mean()
-    return loss
+    return loss, delta_model, delta_ref
