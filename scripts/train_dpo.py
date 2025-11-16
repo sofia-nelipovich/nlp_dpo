@@ -11,6 +11,7 @@ from logger.logger import WandbLogger
 from lora.module import LoRALayer
 from dpo.dataset import DPOPairDataset
 from dpo.loss import dpo_loss
+import numpy as np
 
 # --- PARAMETERS ---
 MODEL_NAME = "EleutherAI/pythia-1.4b"
