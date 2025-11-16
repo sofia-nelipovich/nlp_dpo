@@ -17,7 +17,7 @@ MODEL_NAME = "EleutherAI/pythia-1.4b"
 CHECKPOINT = "data/pythia_lora_sft_ref"
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 MAX_LENGTH = 512
-BATCH_SIZE = 2
+BATCH_SIZE = 1
 EPOCHS = 1
 BETA = 0.1
 LORA_R = 8
@@ -93,6 +93,7 @@ step_count = 0
 for epoch in range(EPOCHS):
     losses = []
     for batch in tqdm(dataloader):
+        torch.cuda.empty_cache()
         optimizer.zero_grad()
         loss = dpo_loss(model, ref_model, batch, tokenizer, BETA)
         loss.backward()
